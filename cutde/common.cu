@@ -395,6 +395,9 @@ WITHIN_KERNEL Real3 AngDisDispFSC(Real y1, Real y2, Real y3, Real beta,
 
     Real sinB = sin(beta);
     Real cosB = cos(beta);
+    if (cosB == 0.) {
+        cosB = EPS;
+    }
     Real cotB = cosB / sinB;
     Real y3b = y3+2*a;
     Real z1b = y1*cosB+y3b*sinB;
@@ -475,6 +478,9 @@ WITHIN_KERNEL Real6 AngDisStrainFSC(Real y1, Real y2, Real y3, Real beta,
 
     Real sinB = sin(beta);
     Real cosB = cos(beta);
+    if (cosB == 0.) {
+        cosB = EPS;
+    }
     Real cotB = cosB / sinB;
     Real y3b = y3+2*a;
     Real z1b = y1*cosB+y3b*sinB;
@@ -648,8 +654,8 @@ WITHIN_KERNEL Real6 AngSetupFSC_S(Real3 obs, Real3 slip, Real3 PA, Real3 PB, Rea
     Real3 full_out = inv_transform3(Vnorm, Vstrike, Vdip, out);
 </%def>
 
-<%def name="strain_fs(tri_prefix)">
-    ${setup_tde(tri_prefix, "false")}
+<%def name="strain_fs(tri_prefix, is_halfspace='false')">
+    ${setup_tde(tri_prefix, is_halfspace)}
 
     Real6 out;
     if (mode == 1) {
@@ -677,6 +683,8 @@ WITHIN_KERNEL Real6 AngSetupFSC_S(Real3 obs, Real3 slip, Real3 PA, Real3 PB, Rea
 </%def>
 
 <%def name="setup_tde(tri_prefix, is_halfspace)">
+
+    // printf("is_halfspace: %s\n", ${is_halfspace} ? "true":"false");
     Real3 Vnorm = normalize3(cross3(
         sub3(${tri_prefix}1, ${tri_prefix}0),
         sub3(${tri_prefix}2, ${tri_prefix}0)
@@ -686,13 +694,13 @@ WITHIN_KERNEL Real6 AngSetupFSC_S(Real3 obs, Real3 slip, Real3 PA, Real3 PB, Rea
     Real3 Vstrike = cross3(eZ, Vnorm);
     if (length3(Vstrike) == 0) {
         Vstrike = mul_scalar3(eY, Vnorm.z);
-        % if is_halfspace:
+        if (${is_halfspace}) {
             // For horizontal elements in case of half-space calculation!!!
             // Correct the strike vector of image dislocation only
             if (${tri_prefix}0.z > 0) {
                 Vstrike = negate3(Vstrike);
             }
-        % endif
+        }
     }
     Vstrike = normalize3(Vstrike); 
     Real3 Vdip = cross3(Vnorm, Vstrike);
@@ -749,7 +757,7 @@ WITHIN_KERNEL Real6 AngSetupFSC_S(Real3 obs, Real3 slip, Real3 PA, Real3 PB, Rea
         image_tri2.z *= -1;
 
         // Image dislocation
-        ${disp_fs("image_tri")}
+        ${disp_fs("image_tri", "true")}
 
         summed_terms = add3(summed_terms, full_out);
     }
@@ -783,7 +791,7 @@ WITHIN_KERNEL Real6 AngSetupFSC_S(Real3 obs, Real3 slip, Real3 PA, Real3 PB, Rea
         image_tri2.z *= -1;
 
         // Image dislocation
-        ${strain_fs("image_tri")}
+        ${strain_fs("image_tri", "true")}
 
         summed_terms = add6(summed_terms, full_out);
     }

@@ -19,11 +19,14 @@
     <a target="_blank" href="https://anaconda.org/conda-forge/cutde" title="conda-forge"><img src="https://img.shields.io/conda/dn/conda-forge/cutde"></a>
     <a target="_blank" href="LICENSE" title="License: MIT"><img src="https://img.shields.io/badge/License-MIT-blue.svg"></a>
     <a target="_blank" href="https://github.com/tbenthompson/cutde/actions" title="Test Status"><img src="https://github.com/tbenthompson/cutde/actions/workflows/test.yml/badge.svg"></a>
+    <a href="https://zenodo.org/badge/latestdoi/132957124"><img src="https://zenodo.org/badge/132957124.svg" alt="DOI"></a>
 </a>
 
 <!--STOP, MAKE SURE YOU ARE EDITING docs/README-tmpl.md and not README.md-->
 
 #  Python CPU and GPU accelerated TDEs, over 100 million TDEs per second! 
+
+**Note from Dec 2022**: The code here work beautifully and I plan to continue making minor bug fixes maintaining the current functionality. But I no longer will be making any improvements to this project. I would be happy to [chat or email](http://www.tbenthompson.com) to help anyone who wants to dive in. For the biggest potential improvement, see this issue: https://github.com/tbenthompson/cutde/issues/23 
 
 **cutde**: CUDA, OpenCL and C++ enabled fullspace and halfspace triangle dislocation elements (TDEs), benchmarked at 130 million TDEs per second. `cutde` is a translation and optimization of the [original MATLAB code from Nikhoo and Walter 2015.](https://volcanodeformation.com/software). In addition to the basic pair-wise TDE operations for displacement and strain, `cutde` also has:
 * all pairs matrix construction functions.
@@ -44,8 +47,18 @@ See below for basic usage and installation instructions. For more realistic usag
    * [Block-wise interaction matrices](#block-wise-interaction-matrices)
    * [Adaptive cross approximation (ACA)](#adaptive-cross-approximation-aca)
 * [Installation](#installation)
+   * [GPU installation](#gpu-installation)
+      * [PyCUDA](#pycuda)
+      * [Mac OS X](#mac-os-x)
+      * [Ubuntu + PyOpenCL/PoCL](#ubuntu--pyopenclpocl)
+      * [Ubuntu + PyOpenCL with system drivers](#ubuntu--pyopencl-with-system-drivers)
+      * [Windows](#windows)
+      * [Something else](#something-else)
+      * [Why can't I use Apple CPU OpenCL?](#why-cant-i-use-apple-cpu-opencl)
+* [Development](#development)
+   * [Architecture](#architecture)
 
-<!-- Added by: tbent, at: Thu Mar 17 09:11:26 EDT 2022 -->
+<!-- Added by: tbent, at: Tue Feb  7 09:33:32 EST 2023 -->
 
 <!--te-->
 
@@ -126,7 +139,11 @@ Use:
 stress = cutde.fullspace.strain_to_stress(strain, sm, nu)
 ```
 
-to convert from stress to strain assuming isotropic linear elasticity. `sm` is the shear modulus and `nu` is the Poisson ratio.
+to convert from stress to strain assuming isotropic linear elasticity. `sm` is the shear modulus and `nu` is the Poisson ratio. The `strain` array here is expected to have a shape `(N, 6)`. In case you have a matrix or other shaped array, this snippet might help:
+
+```
+strain_to_stress(strain_matrix.reshape((-1, 6)), mu, nu).reshape(strain_matrix.shape)
+```
 
 ## All pairs interactions matrix
 
@@ -274,6 +291,8 @@ For developing `cutde`, clone the repo and set up your conda environment based o
 ```
 conda env create
 ```
+
+Then, `pip install -e .`.
 
 Next, for developing on a GPU, please install either `pycuda` or `pyopencl` as instructed in the Installation section above.
 
